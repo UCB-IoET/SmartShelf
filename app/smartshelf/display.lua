@@ -10,39 +10,46 @@ shelves = {}
 
 curInd = 0
 noShelf = 4
+newItemFlag = false
+getWeightsFlag = false
 
 cord.new(function()
     cord.await(SVCD.init, "shelfclient")
-    print("inside the cord")
     SVCD.advert_received = function(pay, srcip, srcport)
         local adv = storm.mp.unpack(pay)
-        print("got payload", pay)
+        print("got payload")
         for k,v in pairs(adv) do
             --These are the services
             if k == 0x5101 then
                 --Characteristic
                 for kk,vv in pairs(v) do
                     if vv == 0x6105 and k == 0x5101 then
-                        -- This is a SmartShelf new item service
-                        if strips[srcip] == nil then
+                        if shelves[srcip] == nil then
                             print ("Discovered SmartShelf newitem: ", srcip)
-			    SVCD.subscribe(srcip,0x5101, 0x6105, function(msg)
-                               local rec = storm.array.fromstr(msg) 
-                               newItem = rec:get(1)
-                               newItemW = rec:get(2)
-                               print("Detected change ", newItem, newItemW)
-                            end)
                         end
+                        -- This is a SmartShelf new item service
+                        if newItemFlag == false then
+		            SVCD.subscribe(srcip,0x5101, 0x6105, function(msg)
+                                local rec = storm.array.fromstr(msg) 
+                                newItem = rec:get(1)
+                                newItemW = rec:get(2)
+                                print("Detected change ", newItem, newItemW)
+                            end)
+			    newItemFlag = true
+			end
                         shelves[srcip] = storm.os.now(storm.os.SHIFT_16)
                     end
                     if vv == 0x6106 and k == 0x5101 then
-                        -- This is a SmartShelf new item service
-                        if strips[srcip] == nil then
+                        -- This is a SmartShelf get weights service
+                        if shelves[srcip] == nil then
                             print ("Discovered SmartShelf getWeights: ", srcip)
-			    SVCD.subscribe(srcip,0x5101, 0x6106, function(msg)
+                        end
+                        if getWeightsFlag == false then
+                            SVCD.subscribe(srcip,0x5101, 0x6106, function(msg)
                                 arr = storm.array.fromstr(msg)
                                 print("Got weights", arr)
                             end)
+                            getWeightsFlag = true
                         end
                         shelves[srcip] = storm.os.now(storm.os.SHIFT_16)
                     end
