@@ -77,7 +77,7 @@ int c_adcife_sample_channel(uint8_t channel)
     //Clear out the struct
     seqcfg.flat = 0;
     //Set the positive channel to A0
-    seqcfg.bits.muxpos = chanmap[0];
+    seqcfg.bits.muxpos = chanmap[channel];
     //Enable bipolar mode, this seems to drastically reduce noise
     seqcfg.bits.bipolar = 1;
     //Enable the internal voltage source for the negative reference
@@ -104,7 +104,8 @@ int adcife_init(lua_State *L)
 int adcife_sample_an0(lua_State *L)
 {
     //TODO: turn this into a metamethod on a table, look in stormarray.c for examples
-    int sample = c_adcife_sample_channel(0);
+    int channel = luaL_checkinteger(L, 1);
+    int sample = c_adcife_sample_channel(channel);
     lua_pushnumber(L, sample);
     return 1;
 }
