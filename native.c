@@ -399,6 +399,131 @@ static int contrib_helloX_tail(lua_State *L)
     }
 }
 
+
+static int contrib_barcode_sample(lua_State *L)
+{
+  // This function reads the data line until the SLCK line rises
+  uint32_t volatile * read = (uint32_t volatile *)(0x400E1000 + 0x0 + 0x60);   
+  uint32_t SCLK = 0x10000; //D2 blue wire
+  uint32_t DAT = 0x1000;  //D3 green wire 
+  
+
+  int dataLength = 8*12*5;
+  int bitCounter = 0; 
+  int charCounter = 0;
+  uint8_t *dataArray = malloc(dataLength*sizeof(uint8_t));
+  int i;
+  for (i = 0; i < dataLength; i++)
+	dataArray[i] = 0;
+
+  //dataArray[charCounter] = (*read & DAT) >> 12;
+dataArray[charCounter++] = (*read & DAT) >> 12;
+  bitCounter++;
+
+  while(charCounter < dataLength)
+  {
+    while((*read & SCLK) != SCLK);
+    while((*read & SCLK) == SCLK);
+     /* if(bitCounter == 8) {
+	charCounter++;
+        bitCounter = 0;
+      }
+      dataArray[charCounter] = (dataArray[charCounter] << 1) + ((*read & DAT)>>12);
+      bitCounter++; 	*/
+dataArray[charCounter++] = (*read & DAT)>>12;	  
+  }
+
+  printf("..........\n");
+ 
+  for(i = 0; i < dataLength; i++){
+    printf("%d", dataArray[i]);
+    //printf("     %c\n", (char) dataArray[i]);
+    
+  }
+  free(dataArray);
+
+  return 1;
+}
+
+
+
+char barcodeRead() {
+  uint32_t volatile * read = (uint32_t volatile *)(0x400E1000 + 0x0 + 0x60);   
+  uint32_t SCLK = 0x10000; //D2 blue wire
+  uint32_t DAT = 0x1000;  //D3 green wire 
+  char val = 0;
+int i;
+for (i = 0; i < 13; i++) {
+  while ((*read & SCLK) == SCLK);                      
+  while ((*read & SCLK) != SCLK);   	
+}                    
+
+  int offset;                    
+  for (offset = 0; offset < 8; offset++) {                           
+    while ((*read & SCLK) == SCLK);                     
+    val = (val<<1) + ((*read & DAT) >> 12);                 
+    while ((*read & SCLK) != SCLK);                      
+  } 
+if (val == 0x5a) {
+  return val;
+}
+for (i = 0; i < 12; i++) {
+  while ((*read & SCLK) == SCLK);                      
+  while ((*read & SCLK) != SCLK);   	
+}         
+  return val;                                                         
+}
+
+static int contrib_barcode_sample_chars(lua_State *L) {
+  int SCAN_ENTER = 0x5a; 
+  char dataValue;
+  char scanCodes[10] = {0xa2, 0x68, 0x78, 0x64, 0xa4, 0x74, 0x6c, 0xbc, 0x7c, 0x62}; 
+  char characters[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+  int quantityCodes = 10;
+  char buffer[100] = {};
+  int bufferPos = 0;
+  int i;
+  int MAX_LENGTH = 100;
+
+  printf("Inside barcode_sample_chars function\n");
+
+  uint32_t volatile * read = (uint32_t volatile *)(0x400E1000 + 0x0 + 0x60);   
+  uint32_t SCLK = 0x10000; //D2 blue wire
+  uint32_t DAT = 0x1000;  //D3 green wire 
+  char val = 0;
+  for (i = 0; i < 10; i++) {
+    while ((*read & SCLK) == SCLK);                      
+    while ((*read & SCLK) != SCLK);   	
+  }    
+
+  while(bufferPos < MAX_LENGTH) {
+    dataValue = barcodeRead();                                                
+                                                                                     
+    for (i = 0; i < quantityCodes; i++) {                              
+      char temp = scanCodes[i];                                            
+      if(temp ==  dataValue){           
+          buffer[bufferPos++] = characters[i];                                                              
+      }                                                                    
+    }                                                                      
+
+    if(dataValue == SCAN_ENTER){                                           
+      printf("\nbuffer: ");
+      for(i = 0; i < bufferPos; i++) {
+	printf("%c", buffer[i]);
+        buffer[i] = 0;
+      }                                                     
+      printf(" [Enter]\n");
+      bufferPos = 0;                                         
+      return; 
+    }                                                                                                                                
+  }                                                                          
+                                                                                                                               
+}
+
+
+
+
+
 ////////////////// BEGIN MODULE MAP /////////////////////////////
 const LUA_REG_TYPE contrib_native_map[] =
 {
@@ -411,6 +536,8 @@ const LUA_REG_TYPE contrib_native_map[] =
     { LSTRKEY( "led_init"), LFUNCVAL ( contrib_led_init ) },
     { LSTRKEY( "led_show"), LFUNCVAL ( contrib_led_show ) },
     { LSTRKEY( "led_set"), LFUNCVAL ( contrib_led_set ) },
+    { LSTRKEY( "barcode_sample"), LFUNCVAL ( contrib_barcode_sample ) },
+    { LSTRKEY( "barcode_sample_chars"), LFUNCVAL ( contrib_barcode_sample_chars ) },
 
 
     SVCD_SYMBOLS
