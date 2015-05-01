@@ -490,11 +490,11 @@ static int contrib_barcode_sample_chars(lua_State *L) {
   uint32_t volatile * read = (uint32_t volatile *)(0x400E1000 + 0x0 + 0x60);   
   uint32_t SCLK = 0x10000; //D2 blue wire
   uint32_t DAT = 0x1000;  //D3 green wire 
-  char val = 0;
   for (i = 0; i < 10; i++) {
     while ((*read & SCLK) == SCLK);                      
     while ((*read & SCLK) != SCLK);   	
   }    
+  buffer[bufferPos++] = 'X';
 
   while(bufferPos < MAX_LENGTH) {
     dataValue = barcodeRead();                                                
@@ -507,14 +507,16 @@ static int contrib_barcode_sample_chars(lua_State *L) {
     }                                                                      
 
     if(dataValue == SCAN_ENTER){                                           
-      printf("\nbuffer: ");
-      for(i = 0; i < bufferPos; i++) {
-	printf("%c", buffer[i]);
-        buffer[i] = 0;
-      }                                                     
-      printf(" [Enter]\n");
-      bufferPos = 0;                                         
-      return; 
+      //printf("\nbuffer: ");
+      //for(i = 0; i < bufferPos; i++) {
+	//printf("%c", buffer[i]);
+       // buffer[i] = 0;
+      //}                                                     
+      //printf(" [Enter]\n");
+      //bufferPos = 0;
+	buffer[bufferPos] = 0;
+      lua_pushstring(L, buffer);                                       
+      return 1; 
     }                                                                                                                                
   }                                                                          
                                                                                                                                
