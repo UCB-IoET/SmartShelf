@@ -44,6 +44,12 @@ static const int chanmap [] = {
 /////////////////////////////////////////////////////////////
 
 //Pure C functions
+
+void sleepLoop() {
+    uint32_t i;
+    for (i = 0; i< 100000; i++);
+}
+
 void c_adcife_init()
 {
     //Reset the ADCIFE so that we can apply any configuration changes
@@ -53,8 +59,10 @@ void c_adcife_init()
     ADCIFE->cfg.bits.prescal = 0b100;
     //Set speed for 300ksps
     ADCIFE->cfg.bits.speed = 0b00;
+    sleepLoop();
     //Reset the module
     ADCIFE->cr.bits.swrst = 1;
+    sleepLoop();
     //Enable it
     ADCIFE->cr.bits.en = 1;
     //Wait for it to be enabled
@@ -79,13 +87,14 @@ int c_adcife_sample_channel(uint8_t channel)
     //Set the positive channel to A0
     seqcfg.bits.muxpos = chanmap[channel];
     //Enable bipolar mode, this seems to drastically reduce noise
-    seqcfg.bits.bipolar = 1;
+    //seqcfg.bits.bipolar = 1;
+    seqcfg.bits.bipolar = 0;
     //Enable the internal voltage source for the negative reference
     seqcfg.bits.internal = 0b10;
     //Set the negative reference to ground
     seqcfg.bits.muxneg = 0b011;
     //Set the gain to 1/2
-    //seqcfg.bits.gain = 0b111;
+    seqcfg.bits.gain = 0b111;
     //Set it
     ADCIFE->seqcfg = seqcfg;
     //Start the conversion
