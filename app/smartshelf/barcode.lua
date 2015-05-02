@@ -22,7 +22,7 @@ cord.new(function ()
 	end
         local t = {barcodeVal}
         storm.net.sendto(sendsock, storm.mp.pack(t), shellip, 2199)
-	cord.await(storm.os.invokeLater, 5000 * storm.os.MILLISECOND)
+	cord.await(storm.os.invokeLater, 1000 * storm.os.MILLISECOND)
     end
 end)
 
