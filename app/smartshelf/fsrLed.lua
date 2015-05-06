@@ -31,7 +31,7 @@ ssock = storm.net.udpsocket(listen_port, function(payload, from, port)
 cord.new(function ()
     --fsr:init()
     while true do
-        cord.await(storm.os.invokeLater, 1000 * storm.os.MILLISECOND)
+        cord.await(storm.os.invokeLater, 3000 * storm.os.MILLISECOND)
         --local data = fsr:get()
         storm.n.adcife_init()
         local data0 = storm.n.adcife_sample_an0(0)
@@ -41,7 +41,13 @@ cord.new(function ()
         local data2 = storm.n.adcife_sample_an0(2)
         storm.n.adcife_init()
         local data3 = storm.n.adcife_sample_an0(3)
-        local t = {data0, data1, data2, data3}
+	storm.n.adcife_init()
+        local data4 = storm.n.adcife_sample_an0(4)
+	storm.n.adcife_init()
+        local data5 = storm.n.adcife_sample_an0(5)
+	
+        local t = {data0, data1, data2, data3, data4, data5, 0, 0, 0}
+	print(data0, data1, data2, data3, data4, data5, 0, 0, 0)
         storm.net.sendto(sendsock, storm.mp.pack(t), shellip, 2198)
     end
 end)
